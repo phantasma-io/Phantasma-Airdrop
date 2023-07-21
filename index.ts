@@ -46,12 +46,14 @@ async function ReadDataFromCSV(){
 }
 
 async function SendAirdrop() {
-  let expiration : Date = new Date(Date.now() + 60 * 20 * 1000);
+  let expiration : Date = new Date(Date.now() + 60 * 60 * 10 * 1000);
   console.log("Expiration:", expiration);
   let script : string;
 
   let sb = new ScriptBuilder();
   let myScript = sb.AllowGas(Keys.Address, Address.Null, GasPrice, GasLimit);
+  let totalKCAL = 0;
+  let totalSOUL = 0;
 
   for (let element of results) 
   {
@@ -63,6 +65,14 @@ async function SendAirdrop() {
     if ( !IsValidAmount(element) ){
       console.log("Oversized amount: ", element);
       return;
+    }
+
+    if (element.Symbol === "SOUL"){
+      totalSOUL += Number(element.Amount);
+    }
+    else
+    {
+      totalKCAL += Number(element.Amount);
     }
 
     myScript = sb.CallInterop("Runtime.TransferTokens", [Keys.Address.Text, element.PhaAddress, element.Symbol, String(element.Amount)]);
@@ -82,8 +92,10 @@ async function SendAirdrop() {
   tx.signWithKeys(Keys);
   const rawTx = Base16.encodeUint8Array(tx.ToByteAray(true));
   console.log(rawTx);
-  //await api.sendRawTransaction(rawTx);
+  await api.sendRawTransaction(rawTx);
   console.log("Transaction sent");
+  console.log("Total SOUL: ", totalSOUL / 10 ** 8);
+  console.log("Total KCAL: ", totalKCAL / 10 ** 10);
 }
 
 function IsValidAmount(element : Data){
